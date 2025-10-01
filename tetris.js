@@ -666,6 +666,46 @@ if (refreshBtn) {
   });
 }
 
+// --- 🎵 Song switching controls ---
+const themeAudio = document.getElementById('theme');
+const prevSongBtn = document.getElementById('prevSongBtn');
+const nextSongBtn = document.getElementById('nextSongBtn');
+
+const songs = [
+  { name: 'Korobeiniki', src: 'tetris-theme.mp3' },
+  { name: 'Dance of the sugar plum fairies', src: 'sugarplumfairies.mp3' },
+  { name: 'Trepak', src: 'trepak.mp3' },
+];
+
+let currentSongIndex = 0;
+
+// make sure loop stays on
+themeAudio.loop = true;
+themeAudio.src = songs[currentSongIndex].src;
+
+// helper to switch songs
+function playSong(index) {
+  if (index < 0) index = songs.length - 1;
+  if (index >= songs.length) index = 0;
+  currentSongIndex = index;
+  themeAudio.src = songs[currentSongIndex].src;
+  themeAudio.play();
+}
+
+function bindSongButton(btn, direction) {
+  if (!btn) return;
+  const handler = (e) => {
+    e.preventDefault();
+    playSong(currentSongIndex + direction);
+  };
+  btn.addEventListener('click', handler);
+  btn.addEventListener('touchstart', handler);
+}
+
+bindSongButton(prevSongBtn, -1);
+bindSongButton(nextSongBtn, +1);
+
+
 
 })();
 
