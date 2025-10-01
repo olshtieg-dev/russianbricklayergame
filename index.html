@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+ <head>
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, 
+      maximum-scale=1.0, user-scalable=no"> (possible change for later) -->
+    <title>TETRIS</title>
+    
+    <link rel="stylesheet" type="text/css" href="tetris.css" />
+    <style>
+       body {
+        background-color: #000; 
+        color: #000;
+        opacity: 0.8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+        font-family: 'Russo One', sans-serif;
+      }
+
+      #title {
+        font-size: 6rem;
+        margin: 0 px 0;
+        text-align: center;
+      }
+
+      #tetris {
+        display: flex;
+        gap: 2px;
+      } 
+    </style>
+  </head>
+  <body>
+    <nav></nav>
+    <h1 id="title">ТЕТРИС</h1>
+    <div id="topButtons">
+     <button id="refreshBtn">🔄 Restart</button>
+    </div>
+
+    <div id="tetris">
+      <div id="canvas"></div>
+      <div id="info">
+        <div id="next_shape"></div>
+        <p id="level">Уровень: <span></span></p>
+        <p id="lines">Линии: <span></span></p>
+        <p id="score">Очки: <span></span></p>
+        <p id="time">Время: <span></span></p>
+        <button id="start">Старт</button>
+        <p class="red">Нажмите Esc для паузы<span></span></p>
+      </div>
+      
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="controls">
+      <button id="leftBtn">⟵</button>
+      <button id="rotateBtn">⟳</button>
+      <button id="rightBtn">⟶</button>
+      <button id="downBtn">⟱</button>
+    </div>
+       <audio id="theme" src="tetris-theme.mp3" loop></audio>
+       <script type="text/javascript" src="tetris.js"></script>
+  </body>
+</html>
