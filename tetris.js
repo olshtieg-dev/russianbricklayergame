@@ -610,9 +610,45 @@ function bindControl(btn, keyCode) {
   });
 }
 
-bindControl(leftBtn, 37);   // ⟵
-bindControl(rightBtn, 39);  // ⟶
-bindControl(downBtn, 40);   // ⟱
+// --- Repeating controls for mobile + desktop ---
+function bindHoldControl(btn, keyCode, interval = 100) {
+  if (!btn) return;
+  let timer = null;
+
+  function start() {
+    if (timer) return;
+    triggerKey(keyCode); // immediate fire
+    timer = setInterval(() => triggerKey(keyCode), interval);
+  }
+
+  function stop() {
+    clearInterval(timer);
+    timer = null;
+  }
+
+  // Touch events
+  btn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    start();
+  });
+  btn.addEventListener('touchend', stop);
+  btn.addEventListener('touchcancel', stop);
+
+  // Mouse events
+  btn.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    start();
+  });
+  btn.addEventListener('mouseup', stop);
+  btn.addEventListener('mouseleave', stop);
+}
+
+// Left, Right, Down repeat while held
+bindHoldControl(leftBtn, 37, 100);   // ⟵
+bindHoldControl(rightBtn, 39, 100);  // ⟶
+bindHoldControl(downBtn, 40, 50);    // ⟱ faster drop
+
+// Rotate single tap
 bindControl(rotateBtn, 38); // ⟳
 
 const refreshBtn = document.getElementById('refreshBtn');
