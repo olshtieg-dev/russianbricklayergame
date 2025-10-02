@@ -306,11 +306,32 @@
         this.incLevel();
       }
     },
-    gameOver: function () {
-      this.clearTimers();
-      isStart = false;
-      this.canvas.innerHTML = '<h1>GAME OVER</h1>';
-    },
+   gameOver: function (text = 'конец игры') {
+  // Stop any running timers
+  this.clearTimers();
+  isStart = false;
+  this.isActive = 0;
+  this.curComplete = true; // prevent further moves
+
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.style.position = 'absolute';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.color = '#ff0000';
+  overlay.style.fontSize = '32px';
+  overlay.style.fontFamily = 'Russo One, sans-serif';
+  overlay.style.backgroundColor = 'rgba(0,0,0,0.7)';
+  overlay.innerText = text;
+
+  // Append overlay to canvas
+  this.canvas.appendChild(overlay);
+},
     play: function () {
       var me = this;
       if (this.timer === null) {
@@ -336,13 +357,22 @@
       this.isActive = 1;
     },
     togglePause: function () {
-      if (this.isActive === 1) {
-        this.clearTimers();
-        this.isActive = 0;
-      } else {
-        this.play();
-      }
-    },
+  const music = document.getElementById('theme');
+
+  if (this.isActive === 1) {
+    // Pause the game
+    this.clearTimers();
+    this.isActive = 0;
+    // Pause music
+    music.pause();
+  } else {
+    // Resume game
+    this.play();
+    // Resume music
+    music.play();
+  }
+},
+
     clearTimers: function () {
       clearTimeout(this.timer);
       clearTimeout(this.pTimer);
@@ -391,22 +421,50 @@
         this.curComplete = true;
       }
     },
-    rotate: function () {
-      if (this.curShapeIndex !== 6) {
-        //square
-        var temp = [];
-        this.curShape.eachdo(function () {
-          temp.push([this[1] * -1, this[0]]);
-        });
-        if (this.checkMove(this.curX, this.curY, temp)) {
-          this.curShape = temp;
-          this.removeCur();
-          this.drawShape(this.curX, this.curY, this.curShape);
-        } else {
-          throw new Error('Could not rotate!');
-        }
+     rotate: function () {
+  if (this.curShapeIndex === 6) return; // square doesn't rotate
+
+  var temp = [];
+  // rotate 90° clockwise
+  this.curShape.eachdo(function () {
+    temp.push([this[1] * -1, this[0]]);
+  });
+
+  // Check if rotation is valid; if not, try wall kicks
+  if (this.checkMove(this.curX, this.curY, temp)) {
+    this.applyRotation(temp);
+  } else {
+    // Wall kick offsets to try: right, left, up
+    var kicks = [
+      { x: 1, y: 0 },
+      { x: -1, y: 0 },
+      { x: 0, y: -1 },
+    ];
+    var kicked = false;
+    for (var i = 0; i < kicks.length; i++) {
+      var nx = this.curX + kicks[i].x;
+      var ny = this.curY + kicks[i].y;
+      if (this.checkMove(nx, ny, temp)) {
+        this.curX = nx;
+        this.curY = ny;
+        this.applyRotation(temp);
+        kicked = true;
+        break;
       }
-    },
+    }
+    if (!kicked) {
+      // rotation fails, leave shape as-is
+      // optionally you could play a "bump" sound
+    }
+  }
+},
+
+applyRotation: function (rotatedShape) {
+  this.curShape = rotatedShape;
+  this.removeCur();
+  this.drawShape(this.curX, this.curY, this.curShape);
+},
+
     checkMove: function (x, y, p) {
       if (this.isOB(x, y, p) || this.isCollision(x, y, p)) {
         return false;
@@ -666,6 +724,39 @@ if (refreshBtn) {
   });
 }
 
+// 🧭 Responsive scaling logic
+function resizeGame() {
+  const gameWidth = 360;
+  const gameHeight = 640;
+  const wrapper = document.getElementById('game-wrapper');
+
+  const style = getComputedStyle(wrapper);
+  const paddingLeft = parseInt(style.paddingLeft) || 0;
+  const paddingRight = parseInt(style.paddingRight) || 0;
+  const paddingTop = parseInt(style.paddingTop) || 0;
+  const paddingBottom = parseInt(style.paddingBottom) || 0;
+
+  const vw = window.innerWidth - paddingLeft - paddingRight;
+  const vh = window.innerHeight - paddingTop - paddingBottom;
+
+  // Get bottom buttons height
+  const bottomControls = document.getElementById('controls');
+  const bottomHeight = bottomControls ? bottomControls.offsetHeight + 20 : 0;
+
+  const availableHeight = vh - bottomHeight;
+
+  const scaleX = vw / gameWidth;
+  const scaleY = availableHeight / gameHeight;
+
+  const scale = Math.min(scaleX, scaleY);
+
+  document.documentElement.style.setProperty('--scale', scale);
+}
+
+window.addEventListener('resize', resizeGame);
+window.addEventListener('load', resizeGame);
+
+
 // --- 🎵 Song switching controls ---
 const themeAudio = document.getElementById('theme');
 const prevSongBtn = document.getElementById('prevSongBtn');
@@ -705,7 +796,9 @@ function bindSongButton(btn, direction) {
 bindSongButton(prevSongBtn, -1);
 bindSongButton(nextSongBtn, +1);
 
-
+document.getElementById('pauseBtn').addEventListener('click', function() {
+  tetris.togglePause();
+});
 
 })();
 
