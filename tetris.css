@@ -140,7 +140,8 @@ html, body {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 2px;
+  margin-bottom: 10px;
 }
 
 
@@ -241,4 +242,13 @@ html, body {
 #pauseBtn:hover {
   background: rgba(225, 255, 95, 0.85);
   transform: scale(1.05);
+}
+* {
+  -webkit-user-select: none; /* Safari/Chrome */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE10+ */
+  user-select: none;         /* Standard */
+  
+  -webkit-tap-highlight-color: transparent; /* iOS/Android */
+  touch-action: manipulation; /* improves mobile tap behavior */
 }

@@ -77,7 +77,7 @@
     curComplete: false,
     timer: null,
     sTimer: null,
-    speed: 700,
+    speed: 800,
     lines: 0,
 
     init: function () {
@@ -85,7 +85,7 @@
       this.canvas = document.getElementById('canvas');
       this.initBoard();
       this.initInfo();
-      this.initLevelScores();
+      //this.initLevelScores();
       this.initShapes();
       this.bindKeyEvents();
       this.play();
@@ -177,13 +177,45 @@
       };
       this.timer = setTimeout(tLoop, 2000);
     },
-    initLevelScores: function () {
-      var c = 1;
-      for (var i = 1; i <= this.numLevels; i++) {
-        this['level' + i] = [c * 1000, 40 * i, 5 * i]; //for nxt level, row score, p sore,
-        c = c + c;
-      }
-    },
+   incLines: function (num) {
+  // increase total line count
+  this.lines += num;
+  this.setInfo('lines');
+
+  // compute new level (1 + every 10 lines)
+  const newLevel = Math.floor(this.lines / 2) + 1;
+
+  // if we crossed into a new level, update
+  if (newLevel > this.level) {
+    this.level = newLevel;
+    this.updateSpeed();
+    this.setInfo('level');
+  }
+},
+
+updateSpeed: function () {
+  // NES-inspired speed table (milliseconds per drop)
+  const speedTable = {
+    1: 800,
+    2: 717,
+    3: 633,
+    4: 550,
+    5: 467,
+    6: 383,
+    7: 300,
+    8: 217,
+    9: 133,
+    10: 100,
+    11: 83,
+    14: 67,
+    15: 50
+  };
+
+  // fallback: cap at fastest speed
+  this.speed = speedTable[this.level] || 83;
+  
+}, 
+
     setInfo: function (el) {
       this[el + 'Display'].innerHTML = this[el];
     },
@@ -276,40 +308,40 @@
       this.score = this.score + amount;
       this.setInfo('score');
     },
-    incLevel: function () {
-      this.level++;
-      this.speed = this.speed - 75;
-      this.setInfo('level');
-    },
-    incLines: function (num) {
-      this.lines += num;
-      this.setInfo('lines');
-    },
-    calcScore: function (args) {
-      var lines = args.lines || 0;
-      var shape = args.shape || false;
-      var speed = args.speed || 0;
-      var score = 0;
+    //incLevel: function () {
+      //this.level++;
+      //this.speed = this.speed - 75;
+      //this.setInfo('level');
+    //},
+   
+   calcScore: function (args) {
+  const lines = args.lines || 0;
+  const shape = args.shape || false;
+  let points = 0;
 
-      if (lines > 0) {
-        score += lines * this['level' + this.level][1];
-        this.incLines(lines);
-      }
-      if (shape === true) {
-        score += shape * this['level' + this.level][2];
-      }
-      /*if (speed > 0){ score += speed * this["level" +this .level[3]];}*/
-      this.incScore(score);
-    },
-    checkScore: function () {
-      if (this.score >= this['level' + this.level][0]) {
-        this.incLevel();
-      }
-    },
+  // NES-style scoring
+  const lineScores = [0, 40, 100, 300, 1200];
+  if (lines > 0) {
+    points += lineScores[lines] * this.level;
+  }
+
+  // Optional bonus for placing a shape
+  if (shape) {
+    points += 5 * this.level;
+  }
+
+  this.incScore(points);
+},
+        //checkScore: function () {
+       //if (this.score >= this['level' + this.level][0]) {
+      //  this.incLevel();
+     // }
+    //},
    gameOver: function (text = 'конец игры') {
   // Stop any running timers
   this.clearTimers();
   isStart = false;
+  this.isGameOver = true;
   this.isActive = 0;
   this.curComplete = true; // prevent further moves
 
@@ -324,9 +356,9 @@
   overlay.style.alignItems = 'center';
   overlay.style.justifyContent = 'center';
   overlay.style.color = '#ff0000';
-  overlay.style.fontSize = '32px';
+  overlay.style.fontSize = '36px';
   overlay.style.fontFamily = 'Russo One, sans-serif';
-  overlay.style.backgroundColor = 'rgba(0,0,0,0.7)';
+  overlay.style.backgroundColor = 'rgba(0,0,0,0.05)';
   overlay.innerText = text;
 
   // Append overlay to canvas
@@ -338,6 +370,7 @@
         this.initTimer();
       }
       var gameLoop = function () {
+        if (me.isGameOver) return;  // ❌ Stop the loop
         me.move('D');
         if (me.curComplete) {
           me.markBoardShape(me.curX, me.curY, me.curShape);
@@ -346,7 +379,7 @@
           });
           me.calcScore({ shape: true });
           me.checkRows();
-          me.checkScore();
+          //me.checkScore();
           me.initShapes();
           me.play();
         } else {
@@ -356,6 +389,30 @@
       this.pTimer = setTimeout(gameLoop, me.speed);
       this.isActive = 1;
     },
+
+    restartTimer: function () {
+  var me = this;
+  if (me.pTimer) clearTimeout(me.pTimer);
+
+  var gameLoop = function () {
+    me.move('D');
+    if (me.curComplete) {
+      me.markBoardShape(me.curX, me.curY, me.curShape);
+      me.curSqs.eachdo(function () {
+        me.sqs.push(this);
+      });
+      me.calcScore({ shape: true });
+      me.checkRows();
+      me.initShapes();
+      me.play();
+    } else {
+      me.pTimer = setTimeout(gameLoop, me.speed);
+    }
+  };
+
+  me.pTimer = setTimeout(gameLoop, me.speed);
+},
+
     togglePause: function () {
   const music = document.getElementById('theme');
 
@@ -550,6 +607,7 @@ applyRotation: function (rotatedShape) {
       }
       if (c > 0) {
         this.calcScore({ lines: c });
+        this.incLines(c); // triggers level + speed changes
       }
     },
     shiftRow: function (y, amount) {
